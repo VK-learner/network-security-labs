@@ -1,24 +1,19 @@
-# Networking & Cybersecurity Portfolio
+# Network Security Labs
 
-A centralized repository containing interactive web simulations, packet crafting scripts, and security tools designed to explore low-level networking mechanics, protocol behavior, and cybersecurity principles.
+A collection of interactive, web-based visual tools designed to break down complex networking architecture and cybersecurity protocols into intuitive, step-by-step visual experiences.
 
-## 📂 Repository Structure
+## 📂 Featured Labs
 
-- **`01-osi-encapsulation-engine/`**: An interactive, web-based visual simulation engine illustrating step-by-step data encapsulation (L7 down to L1) and decapsulation (L1 up to L7) across the OSI model.
-- **`02-packet-crafting/`**: Python scripts utilizing libraries like Scapy to manually build, manipulate, and inject raw network frames and custom packets.
-- **`03-network-scanners/`**: Implementation of socket-based scanning utilities, including stealth TCP SYN port scanners to assess infrastructure states.
-- **`04-cryptography-labs/`**: Practical implementations of cryptographic protocols (like AES-GCM or RSA) demonstrating secure data transit and Presentation Layer security.
+### 1. OSI Layer Encapsulation & Decapsulation Engine
+An interactive, state-driven simulation engine that visualizes how data traverses the OSI model. 
 
-## 🚀 Getting Started
+- **Data Encapsulation (L7 → L1):** Watch plaintext application data transform into an encrypted payload, append transport ports, network IP headers, and Data Link MAC frames before serializing into a raw physical bitstream.
+- **Data Decapsulation (L1 → L7):** Track the receiving host as it ingests the bitstream, runs Frame Check Sequence (FCS) parity checks, strips protocol headers layer-by-layer, and delivers the reassembled message.
 
-### Interactive Simulations
-To run the web-based engines (e.g., the OSI simulation):
-1. Navigate to the specific directory.
-2. Open the `index.html` file directly in any modern web browser.
+## 🚀 How to Run
 
-### Script Execution
-To execute the Python networking and security utilities:
-1. Ensure you have Python 3.x installed.
-2. Install required dependencies:
+Because these labs are built purely using standard frontend web technologies (HTML5, CSS3, vanilla JavaScript), they run entirely inside the browser sandbox. No compilation, terminal commands, or administrative privileges are required.
+
+1. Clone this repository to your local machine:
    ```bash
-   pip install scapy
+   git clone [https://github.com/VK-learner/network-security-labs.git](https://github.com/VK-learner/network-security-labs.git)

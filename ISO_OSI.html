@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Packet Encapsulation & Decapsulation Simulation</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: #131a26;
+            --border-color: #26354a;
+            --text-main: #f0f4f8;
+            --text-muted: #8a99ad;
+            --accent-blue: #00d2ff;
+            --accent-green: #00e676;
+            --accent-red: #ff5252;
+            --header-color: #ffb300;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            width: 100%;
+            max-width: 1400px;
+            gap: 20px;
+        }
+
+        .node-panel {
+            background-color: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .node-panel h2 {
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 0 0 10px 0;
+            color: var(--header-color);
+            text-transform: uppercase;
+        }
+
+        .layer-box {
+            background-color: #1c2635;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .layer-box.active-sender {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+            background-color: #1e354d;
+        }
+
+        .layer-box.active-receiver {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+            background-color: #1d3b2b;
+        }
+
+        .layer-title {
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .layer-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .center-stage {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .inspector-panel {
+            background-color: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .inspector-panel h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .pdu-visualizer {
+            background-color: #070a0f;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .pdu-block {
+            padding: 6px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .pdu-payload { background-color: #fff; color: #000; }
+        .pdu-encrypted { background-color: #e040fb; color: #fff; }
+        .pdu-session { background-color: #ff9800; color: #fff; }
+        .pdu-transport { background-color: #29b6f6; color: #fff; }
+        .pdu-network { background-color: #ab47bc; color: #fff; }
+        .pdu-datalink { background-color: #26a69a; color: #fff; }
+        .pdu-trailer { background-color: #ef5350; color: #fff; }
+
+        .binary-stream {
+            background-color: #070a0f;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            word-break: break-all;
+            min-height: 40px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .execution-log {
+            background-color: #070a0f;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            background-color: #1c2635;
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            padding: 10px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--accent-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+        }
+
+        button:disabled {
+            border-color: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>OSI Layer Encapsulation & Decapsulation Engine</h1>
+
+    <div class="main-layout">
+        <div class="node-panel" id="sender-node">
+            <h2>Device A (Sender)</h2>
+            <div class="layer-box" id="s-l7"><div class="layer-title">L7 - Application</div><div class="layer-meta">Data: Plaintext</div></div>
+            <div class="layer-box" id="s-l6"><div class="layer-title">L6 - Presentation</div><div class="layer-meta">Encryption Phase</div></div>
+            <div class="layer-box" id="s-l5"><div class="layer-title">L5 - Session</div><div class="layer-meta">Session Mapping</div></div>
+            <div class="layer-box" id="s-l4"><div class="layer-title">L4 - Transport</div><div class="layer-meta">TCP Segment Header</div></div>
+            <div class="layer-box" id="s-l3"><div class="layer-title">L3 - Network</div><div class="layer-meta">IP Packet Header</div></div>
+            <div class="layer-box" id="s-l2"><div class="layer-title">L2 - Data Link</div><div class="layer-meta">Ethernet Frame Header/Trailer</div></div>
+            <div class="layer-box" id="s-l1"><div class="layer-title">L1 - Physical</div><div class="layer-meta">Bit Conversion</div></div>
+        </div>
+
+        <div class="center-stage">
+            <div class="inspector-panel">
+                <h3>Active Operation Diagnostic</h3>
+                <div class="execution-log" id="log-box">> System ready. Press "Execute Step" to initialize transmission.</div>
+
+                <h3>Current Protocol Data Unit (PDU) Structure</h3>
+                <div class="pdu-visualizer" id="pdu-container">
+                    <span style="color: var(--text-muted);">No active data inside pipeline.</span>
+                </div>
+
+                <h3>Physical Medium Bit Stream (Layer 1)</h3>
+                <div class="binary-stream" id="binary-container"></div>
+            </div>
+
+            <div class="controls">
+                <button id="step-btn" onclick="nextStep()">Execute Step</button>
+                <button id="reset-btn" onclick="resetSimulation()">Reset</button>
+            </div>
+        </div>
+
+        <div class="node-panel" id="receiver-node">
+            <h2>Device B (Receiver)</h2>
+            <div class="layer-box" id="r-l7"><div class="layer-title">L7 - Application</div><div class="layer-meta">Data Received</div></div>
+            <div class="layer-box" id="r-l6"><div class="layer-title">L6 - Presentation</div><div class="layer-meta">Decryption Phase</div></div>
+            <div class="layer-box" id="r-l5"><div class="layer-title">L5 - Session</div><div class="layer-meta">Session Teardown</div></div>
+            <div class="layer-box" id="r-l4"><div class="layer-title">L4 - Transport</div><div class="layer-meta">Segment Verification</div></div>
+            <div class="layer-box" id="r-l3"><div class="layer-title">L3 - Network</div><div class="layer-meta">Packet Parsing</div></div>
+            <div class="layer-box" id="r-l2"><div class="layer-title">L2 - Data Link</div><div class="layer-meta">Frame Stripping</div></div>
+            <div class="layer-box" id="r-l1"><div class="layer-title">L1 - Physical</div><div class="layer-meta">Bit Ingestion</div></div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const totalSteps = 15;
+
+        const logBox = document.getElementById('log-box');
+        const pduContainer = document.getElementById('pdu-container');
+        const binaryContainer = document.getElementById('binary-container');
+
+        function appendLog(text) {
+            logBox.innerHTML += `<br>> ${text}`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function clearActiveLayers() {
+            document.querySelectorAll('.layer-box').forEach(el => {
+                el.classList.remove('active-sender', 'active-receiver');
+            });
+        }
+
+        function textToBinary(text) {
+            return text.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+        }
+
+        function updateUI() {
+            clearActiveLayers();
+            pduContainer.innerHTML = '';
+            
+            switch(currentStep) {
+                case 1: // Sender L7
+                    document.getElementById('s-l7').classList.add('active-sender');
+                    appendLog("L7 Application: Generating plaintext message: \"Enemy is Near\"");
+                    pduContainer.innerHTML = `<div class="pdu-block pdu-payload">DATA: "Enemy is Near"</div>`;
+                    break;
+                case 2: // Sender L6
+                    document.getElementById('s-l6').classList.add('active-sender');
+                    appendLog("L6 Presentation: Encrypting payload. Translating \"Enemy is Near\" -> \"Eagle is napping\"");
+                    pduContainer.innerHTML = `<div class="pdu-block pdu-encrypted">ENCRYPTED DATA: "Eagle is napping"</div>`;
+                    break;
+                case 3: // Sender L5
+                    document.getElementById('s-l5').classList.add('active-sender');
+                    appendLog("L5 Session: Synchronizing communication links. Appending Session ID metadata.");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-session">Session_ID: 0x9F4A</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>`;
+                    break;
+                case 4: // Sender L4
+                    document.getElementById('s-l4').classList.add('active-sender');
+                    appendLog("L4 Transport: Encapsulating data stream into a TCP Segment. Appending Source/Destination Port fields.");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-transport">TCP: Src Port 51022 | Dst Port 443</div>
+                        <div class="pdu-block pdu-session">Session_ID</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>`;
+                    break;
+                case 5: // Sender L3
+                    document.getElementById('s-l3').classList.add('active-sender');
+                    appendLog("L3 Network: Encapsulating TCP Segment into an IP Packet. Appending Logical Network Addresses (IPs).");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-network">IPv4: Src 192.168.1.50 | Dst 10.0.4.11</div>
+                        <div class="pdu-block pdu-transport">TCP Header</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>`;
+                    break;
+                case 6: // Sender L2
+                    document.getElementById('s-l2').classList.add('active-sender');
+                    appendLog("L2 Data Link: Encapsulating IP Packet into an Ethernet Frame. Appending Hardware MAC Addresses and FCS trailing parity check.");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-datalink">Eth: Src MAC 00:0A:95:9D:68:16 | Dst MAC 00:14:22:01:23:45</div>
+                        <div class="pdu-block pdu-network">IP Header</div>
+                        <div class="pdu-block pdu-transport">TCP Header</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>
+                        <div class="pdu-block pdu-trailer">FCS: 0x7A2F</div>`;
+                    break;
+                case 7: // Sender L1
+                    document.getElementById('s-l1').classList.add('active-sender');
+                    appendLog("L1 Physical: Serializing fully encapsulated Ethernet frame structural block into raw binary bit strings.");
+                    pduContainer.innerHTML = `<span style="color: var(--accent-blue);">Constructing binary byte arrays...</span>`;
+                    binaryContainer.innerText = textToBinary("Eth(MAC) + IP + TCP + 'Eagle is napping' + FCS");
+                    break;
+                case 8: // Transit
+                    appendLog("Physical Medium: Transporting serialized bits down copper cabling via high-frequency voltage fluctuations.");
+                    binaryContainer.style.boxShadow = "0 0 15px #00e676";
+                    setTimeout(() => binaryContainer.style.boxShadow = "none", 500);
+                    break;
+                case 9: // Receiver L1
+                    document.getElementById('r-l1').classList.add('active-receiver');
+                    appendLog("L1 Physical (Receiver): Sampled line status. Ingested electrical bitstream from interface connection.");
+                    break;
+                case 10: // Receiver L2
+                    document.getElementById('r-l2').classList.add('active-receiver');
+                    appendLog("L2 Data Link (Receiver): Parsing Ethernet Frame. Destination MAC validated. Running FCS verification... Success. Stripping L2 frame headers.");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-network">IPv4: Src 192.168.1.50 | Dst 10.0.4.11</div>
+                        <div class="pdu-block pdu-transport">TCP Header</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>`;
+                    break;
+                case 11: // Receiver L3
+                    document.getElementById('r-l3').classList.add('active-receiver');
+                    appendLog("L3 Network (Receiver): Inspecting IP Packet. Local host match verified for IP 10.0.4.11. Stripping Network Layer header.");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-transport">TCP: Src Port 51022 | Dst Port 443</div>
+                        <div class="pdu-block pdu-session">Session_ID</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>`;
+                    break;
+                case 12: // Receiver L4
+                    document.getElementById('r-l4').classList.add('active-receiver');
+                    appendLog("L4 Transport (Receiver): Parsing TCP segments. Verifying target Port (443). Confirming expected sequence indexing. Stripping transport header.");
+                    pduContainer.innerHTML = `
+                        <div class="pdu-block pdu-session">Session_ID: 0x9F4A</div>
+                        <div class="pdu-block pdu-encrypted">"Eagle is napping"</div>`;
+                    break;
+                case 13: // Receiver L5
+                    document.getElementById('r-l5').classList.add('active-receiver');
+                    appendLog("L5 Session (Receiver): Validating Session sequence tokens. Matching data pipeline to existing processing thread.");
+                    pduContainer.innerHTML = `<div class="pdu-block pdu-encrypted">ENCRYPTED DATA: "Eagle is napping"</div>`;
+                    break;
+                case 14: // Receiver L6
+                    document.getElementById('r-l6').classList.add('active-receiver');
+                    appendLog("L6 Presentation (Receiver): Running cryptographic engine decryption scheme. Reversing obfuscation: \"Eagle is napping\" -> \"Enemy is Near\"");
+                    pduContainer.innerHTML = `<div class="pdu-block pdu-payload">DATA: "Enemy is Near"</div>`;
+                    break;
+                case 15: // Receiver L7
+                    document.getElementById('r-l7').classList.add('active-receiver');
+                    appendLog("L7 Application (Receiver): Delivering unencrypted, reassembled application string payload to end application UI layer: \"Enemy is Near\"");
+                    pduContainer.innerHTML = `<div class="pdu-block pdu-payload" style="background-color:var(--accent-green)">"Enemy is Near"</div>`;
+                    document.getElementById('step-btn').disabled = true;
+                    break;
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+            }
+        }
+
+        function resetSimulation() {
+            currentStep = 0;
+            clearActiveLayers();
+            logBox.innerHTML = `> System reset. Pipeline cleared.`;
+            pduContainer.innerHTML = `<span style="color: var(--text-muted);">No active data inside pipeline.</span>`;
+            binaryContainer.innerText = '';
+            document.getElementById('step-btn').disabled = false;
+        }
+    </script>
+</body>
+</html>

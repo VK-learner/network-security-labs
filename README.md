@@ -17,3 +17,10 @@ Because these labs are built purely using standard frontend web technologies (HT
 1. Clone this repository to your local machine:
    ```bash
    git clone [https://github.com/VK-learner/network-security-labs.git](https://github.com/VK-learner/network-security-labs.git)
+
+Open the project folder and double-click `index.html` to launch it in any modern web browser (Chrome, Firefox, Edge, Safari).
+
+Click **Execute Step** to walk through the pipeline diagnostics.
+
+## 🎯 Purpose
+This repository serves as an experiential learning portfolio, transforming abstract networking theories and RFC specifications into tangible visual systems for students, engineers, and visual learners.
